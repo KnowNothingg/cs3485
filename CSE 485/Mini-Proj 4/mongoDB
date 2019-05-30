@@ -1,0 +1,106 @@
+db.restaurants.aggregate([
+    {$group: {_id:0, restaurant_id:1, "address.street":1}}, 
+    {$sort: {name: -1}}
+])
+
+
+db.restaurants.aggregate([
+    {$group: {id: {$id: "$restaurant_id"}, address: {$address : "$address.street"}}},
+    {$match: {"address.street": "Madison Avenue"}}
+]).pretty()
+
+  {$match: {"address.street": "Madison Avenue",  "borough" : "Manhattan"}}, 
+
+
+db.restaurants.aggregate([ 
+    {$project:{"borough": 1, "name": 1, "restaurant_id": 1}},
+    {$lookup:{ from:"rest04L", localField:"name", foreignField:"NAME",as: "rest04L2"}}, 
+    {$lookup:{ from:"genSplit", localField:"address.zipcode", foreignField:"JURISDICTION NAME",as: "genSplit2"}},  
+    {$sort:{"name": 1, "borough": 1}} 
+]).pretty()
+
+
+db.restaurants.find({"address.street": "Madison Avenue",  "borough" : "Manhattan"}, {_id:0, restaurant_id:1, "address.street":1})
+
+db.restaurants.aggregate([ 
+    {$project:{"borough": 1, "Name": 1, "restaurant_id": 1}},
+    {$lookup:{ from:"rest04L", localField:"name", foreignField:"NAME",as: "rest04L2"}}, 
+    {$lookup:{ from:"genSplit", localField:"address.zipcode", foreignField:"JURISDICTION NAME",as: "genSplit2"}},  
+    {$sort:{"Name": 1, "Borough": 1}} ]).pretty()
+
+
+db.restaurants.aggregate([
+    {$match: {"borough": "Manhattan", "address.street": "Madison Avenue"}}, 
+    {$group: {"_id" : {"name": "$name", "street" : "$address.street", "id" : "$restaurant_id"}}},
+    {$sort: {"name":1}}, 
+    {$lookup: 
+        {
+            from: "Inspections",
+            localField: "name",
+            foreignField: "Name",
+            as: "ins"
+        }
+    }
+]).pretty()
+    {$match: {"ins": {$eq: []}}}, 
+    {$project: {"restaurant_id":1, "name":1, "address.street" :1, "_id":0}}
+
+db.restaurants.aggregate([
+    {$match: {"address.street": "Madison Avenue", "borough": "Manhattan"}}, 
+    {$lookup: {
+            from: "Inspections",
+            localField: "name",
+            foreignField: "Name",
+            as: "INS"
+        }}, 
+    {$match: {"INS": {$eq: "[ ]"}}, 
+    {$sort: {"name":1}}, 
+    {$project: {"restaurant_id" :1, "_id":0, "name":1, "address.street":1}} ]).pretty()
+
+
+
+db.restaurants.aggregate([
+        {$match: {"borough": "Brooklyn"}}, 
+        {$group: {"_id": {"type": "$cuisine", "restaurant": "$name"}}},
+        {$sort: {"_id.type": -1, "_id.restaurant": 1}},
+        {$project: {"Title": "$_id.restaurant"}}])
+
+db.restaurants.aggregate([
+        {$lookup: {
+        from: "Demographics",
+        localField: "JURISDICTION NAME",
+        foreignField: "address.zipcode",
+        as : "Dem"
+    }},
+    {$unwind: "$Dem"},
+    {$match: {"Dem.PERCENT FEMALE": "0.5"}}, 
+    {$project: {
+            "borough": 1 , "name": 1, "restaurant_id":1, "_id":0
+    }}, 
+    {$sort: {"borough":1, "name":1}}
+]).pretty()
+
+
+db.restaurants.aggregate([
+    {$lookup: {
+        from: "Inspections",
+        localField: "name",
+        foreignField: "Name",
+        as: "Ins"
+    }}, 
+    {$unwind: "$Ins"},
+    {$match: {"Ins.VIOLATION CODE": "04L"}}, 
+    {$lookup: {
+        from: "Demographics",
+        localField: "JURISDICTION NAME",
+        foreignField: "address.zipcode",
+        as : "Dem"
+    }},
+    {$unwind: "$Dem"},
+    {$match: {"Dem.PERCENT FEMALE": "0.5"}}, 
+    {$project: {
+            "borough": 1 , "name": 1, "restaurant_id":1, "_id":0
+    }}
+])
+
+
